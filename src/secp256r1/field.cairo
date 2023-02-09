@@ -3,13 +3,14 @@ from starkware.cairo.common.math import assert_nn_le, assert_250_bit, assert_le_
 
 from src.secp256r1.constants import (
     BASE, P0, P1, P2, SECP_REM,
+    SECP_REM0, SECP_REM1,SECP_REM2,
     s0,s1,s2,
     r0,r1,r2
 )
 
 // Adapt from starkware.cairo.common.math's assert_250_bit
-func assert_165_bit{range_check_ptr}(value) {
-    const UPPER_BOUND = 2 ** 165;
+func assert_168_bit{range_check_ptr}(value) {
+    const UPPER_BOUND = 2 ** 168;
     const SHIFT = 2 ** 128;
     const HIGH_BOUND = UPPER_BOUND / SHIFT;
 
@@ -46,8 +47,8 @@ func assert_165_bit{range_check_ptr}(value) {
 //
 // This means that if unreduced_mul is called on the result of nondet_bigint3, or the difference
 // between two such results, we have:
-//   Soundness guarantee: the limbs are in the range ().
-//   Completeness guarantee: the limbs are in the range ().
+//   Soundness guarantee: the limbs are in the range (-2**421, 2**421).
+//   Completeness guarantee: the limbs are in the range (-2**423, 2**423).
 func unreduced_mul(a: BigInt3, b: BigInt3) -> (res_low: UnreducedBigInt3) {
     tempvar twice_d2 = a.d2*b.d2;
     tempvar d1d2 = a.d2*b.d1 + a.d1*b.d2;
@@ -79,32 +80,43 @@ func unreduced_sqr(a: BigInt3) -> (res_low: UnreducedBigInt3) {
 
 // Verifies that the given unreduced value is equal to zero modulo the secp256r1 prime.
 //
-// Completeness assumption: val's limbs are in the range (-2**210.99, 2**210.99).
+// Completeness assumption: val's limbs are in the range (-2**249, 2**249).
 // Soundness assumption: val's limbs are in the range (-2**250, 2**250).
 func verify_zero{range_check_ptr}(val: UnreducedBigInt3) {
     alloc_locals;
     local q;
-    local q_sign;
     %{ from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_P as SECP_P %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
 
         q, r = divmod(pack(ids.val, PRIME), SECP_P)
         assert r == 0, f"verify_zero: Invalid input {ids.val.d0, ids.val.d1, ids.val.d2}."
-        if q >= 0:
-            ids.q = q % PRIME
-            ids.q_sign = 1
-        else:
-            ids.q = (0-q) % PRIME
-            ids.q_sign = -1 % PRIME
+        ids.q = q % PRIME
     %}
-    // assert_250_bit(q); // 256K steps
-    // assert_le_felt(q, 2**165); // 275K steps
-    assert_165_bit(q);
-    assert q_sign*(val.d2 + val.d1/BASE + val.d0 / BASE**2) = q * ((BASE / 4) - SECP_REM / BASE ** 2);
-    // Multiply by BASE**2 both sides:
-    //  (q_sign) * val = q * (BASE**3 / 4 - SECP_REM)
-    //            = q * (2**256 - SECP_REM) = q * secp256r1_prime = 0 mod secp256r1_prime
+
+    assert_168_bit(q + 2**167);
+    // q in [-2**167, 2**167)
+
+    tempvar r1 = (val.d0 + q * SECP_REM0) / BASE;
+    assert_168_bit(r1 + 2**167);
+    // r1 in [-2**167, 2**167) also meaning
+    // numerator divides BASE which is the case when val divides secp256r1
+    // so r1 * BASE = val.d0 + q*SECP_REM0 in the integers
+
+    tempvar r2 = (val.d1 + q * SECP_REM1 + r1) / BASE;
+    assert_168_bit(r2 + 2**167);
+    // r2 in [-2**167, 2**167) following the same reasoning
+    // so r2 * BASE = val.d1 + q*SECP_REM1 + r1 in the integers
+    // so r2 * BASE ** 2 = val.d1 * BASE + q*SECP_REM1 * BASE + r1 * BASE
+
+    assert val.d2 + q * SECP_REM2 = q * (BASE / 4) - r2;
+    // both lhs and rhs are in (-2**250, 2**250) so assertion valid in the integers
+    // multiply both sides by BASE**2
+    // val.d2*BASE**2 + q * SECP_REM2*BASE**2
+    //     = q * (2**256) - val.d1 * BASE + q*SECP_REM1 * BASE + val.d0 + q*SECP_REM0
+    //  collect val on one side and all the rest on the otherwise =>
+    //  val = q*(2**256 - SECP_REM) = q * secp256r1 = 0 mod secp256r1
+
     return ();
 }
 
