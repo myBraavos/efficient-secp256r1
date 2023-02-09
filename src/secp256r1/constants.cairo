@@ -1,7 +1,3 @@
-from starkware.cairo.common.cairo_secp.bigint import (
-    BigInt3,
-)
-from starkware.cairo.common.cairo_secp.ec import EcPoint
 // Basic definitions for the secp25r1 elliptic curve.
 // The curve is given by the equation:
 //   y^2 = x^3 + ax + b
@@ -15,6 +11,11 @@ from starkware.cairo.common.cairo_secp.ec import EcPoint
 const SECP_REM = 2**224 - 2**192 - 2**96 + 1;
 
 const BASE = 2 ** 86;
+
+// SECP_REM =  2**224 - 2**192 - 2**96 + 1
+const SECP_REM0 = 0x1;
+const SECP_REM1 = 0x3ffffffffffffffffffc00;
+const SECP_REM2 = 0xfffffffefffff;
 
 // P = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
 const P0 = 0x3fffffffffffffffffffff;
