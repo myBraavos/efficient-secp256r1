@@ -1,32 +1,55 @@
-diff --git a/starkware/cairo/common/cairo_secp/secp_utils.py b/starkware/cairo/common/cairo_secp/secp_utils.py
+diff --git a/src/starkware/cairo/common/cairo_secp/secp_utils.py b/src/starkware/cairo/common/cairo_secp/secp_utils.py
 index 9d0b005..f434372 100644
---- a/starkware/cairo/common/cairo_secp/secp_utils.py
-+++ b/starkware/cairo/common/cairo_secp/secp_utils.py
+--- a/src/starkware/cairo/common/cairo_secp/secp_utils.py
++++ b/src/starkware/cairo/common/cairo_secp/secp_utils.py
 @@ -3,11 +3,16 @@ from typing import List
  from starkware.cairo.common.math_utils import as_int
-
+ 
  BASE = 2**86
 +
  SECP_P = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
  N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
  ALPHA = 0
  BETA = 7
-
+ 
 +SECP256R1_P = 2**256 - 2**224 + 2**192 + 2**96 - 1
 +SECP256R1_N = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
 +SECP256R1_ALPHA = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc
 +SECP256R1_BETA = 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b
-
+ 
  def split(num: int) -> List[int]:
      """
-diff --git a/starkware/starknet/security/whitelists/cairo_secp.json b/starkware/starknet/security/whitelists/cairo_secp.json
-index ac77942..b45200f 100644
---- a/starkware/starknet/security/whitelists/cairo_secp.json
-+++ b/starkware/starknet/security/whitelists/cairo_secp.json
-@@ -1,5 +1,127 @@
+diff --git a/src/starkware/starknet/security/whitelists/cairo_secp.json b/src/starkware/starknet/security/whitelists/cairo_secp.json
+index ac77942..6e6c9c9 100644
+--- a/src/starkware/starknet/security/whitelists/cairo_secp.json
++++ b/src/starkware/starknet/security/whitelists/cairo_secp.json
+@@ -1,5 +1,145 @@
  {
      "allowed_reference_expressions_for_hint": [
++         {
++            "allowed_expressions": [],
++            "hint_lines": [
++                "ids.quad_bit = (",
++                "    8 * ((ids.scalar_v >> ids.m) & 1)",
++                "    + 4 * ((ids.scalar_u >> ids.m) & 1)",
++                "    + 2 * ((ids.scalar_v >> (ids.m - 1)) & 1)",
++                "    + ((ids.scalar_u >> (ids.m - 1)) & 1)",
++                ")"
++            ]
++        },
 +        {
++            "allowed_expressions": [],
++            "hint_lines": [
++                "ids.len_hi = max(ids.scalar_u.d2.bit_length(), ids.scalar_v.d2.bit_length())-1"
++            ]
++        },
++        {
++            "allowed_expressions": [],
++            "hint_lines": [
++                "ids.dibit = ((ids.scalar_u >> ids.m) & 1) + 2 * ((ids.scalar_v >> ids.m) & 1)"
++            ]
++         },
++         {
 +            "allowed_expressions": [],
 +            "hint_lines": [
 +                "from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_P as SECP_P"
@@ -128,12 +151,7 @@ index ac77942..b45200f 100644
 +                "",
 +                "q, r = divmod(pack(ids.val, PRIME), SECP_P)",
 +                "assert r == 0, f\"verify_zero: Invalid input {ids.val.d0, ids.val.d1, ids.val.d2}.\"",
-+                "if q >= 0:",
-+                "    ids.q = q % PRIME",
-+                "    ids.q_sign = 1",
-+                "else:",
-+                "    ids.q = (0-q) % PRIME",
-+                "    ids.q_sign = -1 % PRIME"
++                "ids.q = q % PRIME"
 +            ]
 +        },
 +        {
