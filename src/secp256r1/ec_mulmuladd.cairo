@@ -51,7 +51,7 @@ func ec_mulmuladd_inner{range_check_ptr}(
     let mm1 = m-1;
     local dibit;
     //extract MSB values of both exponents
-     %{ ids.dibit = ((ids.scalar_u >>ids.m)&1) +2*((ids.scalar_v >>ids.m)&1) %}
+    %{ ids.dibit = ((ids.scalar_u >> ids.m) & 1) + 2 * ((ids.scalar_v >> ids.m) & 1) %}
 
     //set R:=R+R
     if (dibit==0){

@@ -55,12 +55,14 @@ func ec_mulmuladdW_bg3{range_check_ptr}(
     let (W14) = ec_add(W10,W4); //14:3Q+2G
     let (W15) = ec_add(W10,W5); //15:3Q+3G
 
-    let PrecPoint = Window( G,Q,W3, W4, W5, W6, W7, W8, W9, W10, W11, W12, W13, W14, W15);
+    local PrecPoint: Window = Window(
+        G, Q, W3, W4, W5, W6, W7, W8, W9, W10, W11, W12, W13, W14, W15);
 
     //initialize R with infinity point
-    let R = EcPoint(BigInt3(0, 0, 0), BigInt3(0, 0, 0));
+    local R: EcPoint = EcPoint(BigInt3(0, 0, 0), BigInt3(0, 0, 0));
 
-    %{ ids.len_hi=max(ids.scalar_u.d2.bit_length(), ids.scalar_v.d2.bit_length())-1 %}
+    %{ ids.len_hi = max(ids.scalar_u.d2.bit_length(), ids.scalar_v.d2.bit_length())-1 %}
+
     assert [range_check_ptr] = len_hi;
     assert [range_check_ptr + 1] = 86 - len_hi;
     let range_check_ptr = range_check_ptr + 2;
