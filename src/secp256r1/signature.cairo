@@ -20,6 +20,7 @@ from src.secp256r1.constants import (
     GX0, GX1, GX2, GY0, GY1, GY2
 )
 from src.secp256r1.ec import ec_add, ec_mul
+from src.secp256r1.ec_mulmuladd_secp256r1 import ec_mulmuladdW_bg3
 from src.secp256r1.field import (
     unreduced_mul,
     unreduced_sqr,
@@ -133,10 +134,7 @@ func verify_secp256r1_signature{range_check_ptr}(
         let (u1: BigInt3) = div_mod_n(msg_hash, s);
         let (u2: BigInt3) = div_mod_n(r, s);
 
-        let (point1) = ec_mul(generator_point, u1);
-        let (point2) = ec_mul(public_key, u2);
-
-        let (point3) = ec_add(point1, point2);
+        let (point3) = ec_mulmuladdW_bg3(generator_point, public_key, u1, u2);
 
         let (x_mod_N) = div_mod_n(point3.x, BigInt3(d0=1, d1=0 ,d2=0));
         // We already validated r in [1, N) so no need to mod N it
