@@ -6,13 +6,13 @@ from starkware.cairo.common.cairo_secp.bigint import (
     BigInt3,
     UnreducedBigInt3,
     bigint_mul,
-    nondet_bigint3,
 )
 from starkware.cairo.common.cairo_secp.ec import EcPoint
 from starkware.cairo.common.math import assert_nn, assert_nn_le, assert_not_zero, unsigned_div_rem
 from starkware.cairo.common.math_cmp import RC_BOUND
 from starkware.cairo.common.uint256 import Uint256
 
+from src.secp256r1.bigint import nondet_bigint3
 from src.secp256r1.constants import (
     N0, N1, N2,
     B0, B1, B2,
