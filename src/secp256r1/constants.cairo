@@ -13,9 +13,9 @@ const SECP_REM = 2**224 - 2**192 - 2**96 + 1;
 const BASE = 2 ** 86;
 
 // SECP_REM =  2**224 - 2**192 - 2**96 + 1
-const SECP_REM0 = 0x1;
-const SECP_REM1 = 0x3ffffffffffffffffffc00;
-const SECP_REM2 = 0xfffffffefffff;
+const SECP_REM0 = 1;
+const SECP_REM1 = -2**10;
+const SECP_REM2 = 0xffffffff00000;
 
 // P = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF
 const P0 = 0x3fffffffffffffffffffff;

@@ -1,5 +1,7 @@
-from starkware.cairo.common.cairo_secp.bigint import BigInt3, UnreducedBigInt3, nondet_bigint3
+from starkware.cairo.common.cairo_secp.bigint import BigInt3, UnreducedBigInt3
 from starkware.cairo.common.cairo_secp.ec import EcPoint
+
+from src.secp256r1.bigint import nondet_bigint3
 from src.secp256r1.field import (
     is_zero,
     unreduced_mul,

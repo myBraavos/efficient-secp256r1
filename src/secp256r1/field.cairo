@@ -1,6 +1,6 @@
-from starkware.cairo.common.cairo_secp.bigint import BigInt3, UnreducedBigInt3, nondet_bigint3
-from starkware.cairo.common.math import assert_nn_le, assert_250_bit, assert_le_felt
+from starkware.cairo.common.cairo_secp.bigint import BigInt3, UnreducedBigInt3
 
+from src.secp256r1.bigint import nondet_bigint3
 from src.secp256r1.constants import (
     BASE, P0, P1, P2, SECP_REM,
     SECP_REM0, SECP_REM1,SECP_REM2,
@@ -9,10 +9,10 @@ from src.secp256r1.constants import (
 )
 
 // Adapt from starkware.cairo.common.math's assert_250_bit
-func assert_168_bit{range_check_ptr}(value) {
-    const UPPER_BOUND = 2 ** 168;
+func assert_165_bit{range_check_ptr}(value) {
+    const UPPER_BOUND = 2 ** 165;
     const SHIFT = 2 ** 128;
-    const HIGH_BOUND = UPPER_BOUND / SHIFT;
+    const HIGH_BOUND = SHIFT - UPPER_BOUND / SHIFT;
 
     let low = [range_check_ptr];
     let high = [range_check_ptr + 1];
@@ -28,7 +28,7 @@ func assert_168_bit{range_check_ptr}(value) {
         ids.high, ids.low = divmod(ids.value, ids.SHIFT)
     %}
 
-    assert [range_check_ptr + 2] = HIGH_BOUND - 1 - high;
+    assert [range_check_ptr + 2] = high + HIGH_BOUND;
 
     assert value = high * SHIFT + low;
 
@@ -47,8 +47,8 @@ func assert_168_bit{range_check_ptr}(value) {
 //
 // This means that if unreduced_mul is called on the result of nondet_bigint3, or the difference
 // between two such results, we have:
-//   Soundness guarantee: the limbs are in the range (-2**421, 2**421).
-//   Completeness guarantee: the limbs are in the range (-2**423, 2**423).
+//   Soundness guarantee: the limbs are in the range (-2**249, 2**249).
+//   Completeness guarantee: the limbs are in the range (-2**250, 2**250).
 func unreduced_mul(a: BigInt3, b: BigInt3) -> (res_low: UnreducedBigInt3) {
     tempvar twice_d2 = a.d2*b.d2;
     tempvar d1d2 = a.d2*b.d1 + a.d1*b.d2;
@@ -94,18 +94,18 @@ func verify_zero{range_check_ptr}(val: UnreducedBigInt3) {
         ids.q = q % PRIME
     %}
 
-    assert_168_bit(q + 2**167);
-    // q in [-2**167, 2**167)
+    assert_165_bit(q + 2**164);
+    // q in [-2**164, 2**164)
 
     tempvar r1 = (val.d0 + q * SECP_REM0) / BASE;
-    assert_168_bit(r1 + 2**167);
-    // r1 in [-2**167, 2**167) also meaning
+    assert_165_bit(r1 + 2**164);
+    // r1 in [-2**164, 2**164) also meaning
     // numerator divides BASE which is the case when val divides secp256r1
     // so r1 * BASE = val.d0 + q*SECP_REM0 in the integers
 
     tempvar r2 = (val.d1 + q * SECP_REM1 + r1) / BASE;
-    assert_168_bit(r2 + 2**167);
-    // r2 in [-2**167, 2**167) following the same reasoning
+    assert_165_bit(r2 + 2**164);
+    // r2 in [-2**164, 2**164) following the same reasoning
     // so r2 * BASE = val.d1 + q*SECP_REM1 + r1 in the integers
     // so r2 * BASE ** 2 = val.d1 * BASE + q*SECP_REM1 * BASE + r1 * BASE
 
@@ -114,7 +114,7 @@ func verify_zero{range_check_ptr}(val: UnreducedBigInt3) {
     // multiply both sides by BASE**2
     // val.d2*BASE**2 + q * SECP_REM2*BASE**2
     //     = q * (2**256) - val.d1 * BASE + q*SECP_REM1 * BASE + val.d0 + q*SECP_REM0
-    //  collect val on one side and all the rest on the otherwise =>
+    //  collect val on one side and all the rest on the other =>
     //  val = q*(2**256 - SECP_REM) = q * secp256r1 = 0 mod secp256r1
 
     return ();
