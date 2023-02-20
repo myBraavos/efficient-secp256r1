@@ -26,8 +26,8 @@ from src.secp256r1.constants import (
 func compute_doubling_slope{range_check_ptr}(point: EcPoint) -> (slope: BigInt3) {
     // Note that y cannot be zero: assume that it is, then point = -point, so 2 * point = 0, which
     // contradicts the fact that the size of the curve is odd.
-    %{  from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_P as SECP_P %}
-    %{  from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_ALPHA as ALPHA %}
+    %{  from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P %}
+    %{  from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_ALPHA as ALPHA %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
         from starkware.python.math_utils import ec_double_slope
@@ -65,7 +65,7 @@ func compute_doubling_slope{range_check_ptr}(point: EcPoint) -> (slope: BigInt3)
 // * point0.x != point1.x (mod secp256r1_prime).
 // * point0, point1 != 0.
 func compute_slope{range_check_ptr}(point0: EcPoint, point1: EcPoint) -> (slope: BigInt3) {
-    %{  from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_P as SECP_P %}
+    %{  from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
         from starkware.python.math_utils import line_slope
@@ -113,7 +113,7 @@ func ec_double{range_check_ptr}(point: EcPoint) -> (res: EcPoint) {
 
     let (slope: BigInt3) = compute_doubling_slope(point);
     let (slope_sqr: UnreducedBigInt3) = unreduced_sqr(slope);
-    %{ from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_P as SECP_P %}
+    %{ from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
 
@@ -181,7 +181,7 @@ func fast_ec_add{range_check_ptr}(point0: EcPoint, point1: EcPoint) -> (res: EcP
 
     let (slope: BigInt3) = compute_slope(point0, point1);
     let (slope_sqr: UnreducedBigInt3) = unreduced_sqr(slope);
-    %{ from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_P as SECP_P %}
+    %{ from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
 
