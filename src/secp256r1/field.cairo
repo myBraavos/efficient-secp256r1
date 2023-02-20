@@ -85,7 +85,7 @@ func unreduced_sqr(a: BigInt3) -> (res_low: UnreducedBigInt3) {
 func verify_zero{range_check_ptr}(val: UnreducedBigInt3) {
     alloc_locals;
     local q;
-    %{ from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_P as SECP_P %}
+    %{ from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
 
@@ -125,7 +125,7 @@ func verify_zero{range_check_ptr}(val: UnreducedBigInt3) {
 // Completeness assumption: x's limbs are in the range (-BASE, 2*BASE).
 // Soundness assumption: x's limbs are in the range (-2**107.49, 2**107.49).
 func is_zero{range_check_ptr}(x: BigInt3) -> (res: felt) {
-    %{ from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_P as SECP_P %}
+    %{ from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
         x = pack(ids.x, PRIME) % SECP_P
