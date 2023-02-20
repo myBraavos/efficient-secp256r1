@@ -45,7 +45,7 @@ func get_generator_point() -> (point: EcPoint) {
 // * The limbs of a are in the range (-2 ** 249, 2 ** 249).
 // * The limbs of b are in the range (-2 ** 159.83, 2 ** 159.83).
 func div_mod_n{range_check_ptr}(a: BigInt3, b: BigInt3) -> (res: BigInt3) {
-    %{ from starkware.cairo.common.cairo_secp.secp_utils import SECP256R1_N as N %}
+    %{ from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_N as N %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
         from starkware.python.math_utils import div_mod, safe_div
