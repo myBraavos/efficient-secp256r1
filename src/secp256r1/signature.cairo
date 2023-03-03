@@ -113,11 +113,9 @@ func validate_signature_entry{range_check_ptr}(val: BigInt3) {
     return ();
 }
 
-// Verifies a Secp256r1 ECDSA signature.
+// Verifies a Secp256r1 ECDSA signature - public_key is expected to be on secp256r1 curve.
 // Also verifies that r and s are in the range (0, N), that their limbs are in the range
-//   [0, BASE)
-// Assumptions:
-// * All the limbs of msg_hash are in the range [0, 3 * BASE).
+// [0, BASE)
 func verify_secp256r1_signature{range_check_ptr}(
     msg_hash: BigInt3, r: BigInt3, s: BigInt3, public_key: EcPoint
 ) {
