@@ -147,3 +147,45 @@ func is_zero{range_check_ptr}(x: BigInt3) -> (res: felt) {
     verify_zero(UnreducedBigInt3(d0=x_x_inv.d0 - 1, d1=x_x_inv.d1, d2=x_x_inv.d2));
     return (res=0);
 }
+
+// Receives an unreduced number, and returns a number that is equal to the original number mod
+// SECP_P and in reduced form.
+// Soundness guarantee: the limbs are in the range (-2**249, 2**249).
+// Completeness guarantee: the limbs are in the range (-2**250, 2**250).
+func reduce{range_check_ptr}(x: UnreducedBigInt3) -> (reduced_x: BigInt3) {
+    let orig_x = x;
+    %{ from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P %}
+    %{
+        from starkware.cairo.common.cairo_secp.secp_utils import pack
+        x = pack(ids.x, PRIME) % SECP_P
+    %}
+    // WORKAROUND: assign x into value for nondet_bigint3 until hint is fixed by Starkware
+    %{
+        from starkware.python.math_utils import div_mod
+
+        value = x_inv = div_mod(1, x, SECP_P)
+    %}
+    let (x_inv: BigInt3) = nondet_bigint3();
+    tempvar x = UnreducedBigInt3(d0=x_inv.d0, d1=x_inv.d1, d2=x_inv.d2);
+    %{
+        from starkware.cairo.common.cairo_secp.secp_utils import pack
+        x = pack(ids.x, PRIME) % SECP_P
+    %}
+    %{
+        from starkware.python.math_utils import div_mod
+
+        value = x_inv = div_mod(1, x, SECP_P)
+    %}
+    // WORKAROUND END
+
+    let (reduced_x: BigInt3) = nondet_bigint3();
+
+    verify_zero(
+        UnreducedBigInt3(
+            d0=orig_x.d0 - reduced_x.d0,
+            d1=orig_x.d1 - reduced_x.d1,
+            d2=orig_x.d2 - reduced_x.d2
+        )
+    );
+    return (reduced_x=reduced_x);
+}

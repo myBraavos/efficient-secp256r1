@@ -17,28 +17,40 @@ def to_uint(a):
     return (a & ((1 << 128) - 1), a >> 128)
 
 
-def get_wycheproof_testcases():
+def get_wycheproof_testcases(groups_only=False):
     with open("tests/ecdsa_secp256r1_sha256_test.json", "r") as f:
         ret_params = []
         test_groups = json.load(f)["testGroups"]
         tg_index = 0
-        test_case = namedtuple(
-            "test_case", ["tg_index", "test_id", "comment", "key", "test"]
-        )
+        if groups_only:
+            test_case = namedtuple("test_case", ["tg_index", "key"])
+        else:
+            test_case = namedtuple(
+                "test_case", ["tg_index", "test_id", "comment", "key", "test"]
+            )
         for test_group in test_groups:
-            for test in test_group["tests"]:
-                test_id = test["tcId"]
-                comment = re.sub("[^0-9a-zA-Z]", "_", test["comment"].lower())
+            if groups_only:
                 ret_params.append(
                     test_case(
                         tg_index,
-                        test_id,
-                        comment,
                         test_group["key"],
-                        test,
                     )
                 )
-            tg_index += 1
+                tg_index += 1
+            else:
+                for test in test_group["tests"]:
+                    test_id = test["tcId"]
+                    comment = re.sub("[^0-9a-zA-Z]", "_", test["comment"].lower())
+                    ret_params.append(
+                        test_case(
+                            tg_index,
+                            test_id,
+                            comment,
+                            test_group["key"],
+                            test,
+                        )
+                    )
+                tg_index += 1
         return ret_params
 
 
@@ -52,7 +64,7 @@ def event_loop(request):
 @pytest_asyncio.fixture(scope="module")
 async def init_contracts():
     main_def = compile_starknet_files(
-        files=["src/main.cairo"], debug_info=True, disable_hint_validation=True
+        files=["src/main.cairo"], debug_info=True, disable_hint_validation=False
     )
     starknet = await Starknet.empty()
 
@@ -84,7 +96,7 @@ async def test_is_valid_sig_sanity_secp256r1_indexed(init_contracts, test_case):
 
         digest_int = int.from_bytes(digest_bytes, "big", signed=False)
         try:
-            _ = await main_contract.verify_secp256r1(
+            _ = await main_contract.verify_secp256r1_sig(
                 list(to_uint(digest_int)), [*to_uint(r), *to_uint(s)], key
             ).call()
             print(_)
@@ -99,3 +111,19 @@ async def test_is_valid_sig_sanity_secp256r1_indexed(init_contracts, test_case):
         pytest.skip(
             f"skipped while parsing {test_case.tg_index}, {test_case.test_id}, {test_case.comment}: {e}"
         )
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "test_case",
+    get_wycheproof_testcases(groups_only=True),
+    ids=lambda tuple: "tg-{}".format(*tuple),
+)
+async def test_verify_point(init_contracts, test_case):
+    main_contract = init_contracts
+
+    key = [
+        *to_uint(int.from_bytes(unhexlify(test_case.key["wx"]), "big")),
+        *to_uint(int.from_bytes(unhexlify(test_case.key["wy"]), "big")),
+    ]
+    _ = await main_contract.verify_secp256r1_point(key).call()
+    print(_)

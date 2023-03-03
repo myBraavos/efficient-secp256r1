@@ -4,6 +4,7 @@ from starkware.cairo.common.cairo_secp.ec import EcPoint
 from src.secp256r1.bigint import nondet_bigint3
 from src.secp256r1.field import (
     is_zero,
+    reduce,
     unreduced_mul,
     unreduced_sqr,
     verify_zero,
@@ -11,6 +12,7 @@ from src.secp256r1.field import (
 
 from src.secp256r1.constants import (
     A0, A1, A2,
+    B0, B1, B2,
 )
 
 // Computes the slope of the elliptic curve at a given point.
@@ -288,4 +290,22 @@ func ec_mul{range_check_ptr}(point: EcPoint, scalar: BigInt3) -> (res: EcPoint) 
     let (res: EcPoint) = ec_add(res0, res1);
     let (res: EcPoint) = ec_add(res, res2);
     return (res=res);
+}
+
+func verify_point{range_check_ptr}(pt: EcPoint) {
+    let (x_square: UnreducedBigInt3) = unreduced_sqr(pt.x);
+    let (x_square_reduced: BigInt3) = reduce(x_square);
+    let (x_cube: UnreducedBigInt3) = unreduced_mul(pt.x, x_square_reduced);
+    let (ax: UnreducedBigInt3) = unreduced_mul(pt.x, BigInt3(d0=A0, d1=A1, d2=A2));
+    let (y_square: UnreducedBigInt3) = unreduced_sqr(pt.y);
+    // Check that y_square = x_cube + ALPHA*x + BETA.
+    verify_zero(
+        UnreducedBigInt3(
+            d0=x_cube.d0 + ax.d0 + B0 - y_square.d0,
+            d1=x_cube.d1 + ax.d1 + B1 - y_square.d1,
+            d2=x_cube.d2 + ax.d2 + B2 - y_square.d2,
+        ),
+    );
+
+    return ();
 }
