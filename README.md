@@ -8,7 +8,7 @@ Current implementation performs ECDSA in **180K** Cairo steps on average on `Pro
 
 Allowing transactions to be signed and validated using the `secp256r1` curve enables great end-user experience in the form of signing transactions using the biometrics on the user's device.
 
-On top of great UX, this also have the added benefit of moving away from seed phrases to better security in modern mobile-devices / laptops, and superior security when the user's device supports a dedicated security chip (e.g. Android's Secure Element and Apple's Secure Enclave etc.).
+On top of great UX, this also has the added benefit of moving away from seed phrases to better security in modern mobile-devices / laptops, and superior security when the user's device supports a dedicated security chip (e.g. Android's Secure Element and Apple's Secure Enclave etc.).
 
 Since `secp256r1` ECDSA is not native to Cairo (i.e. it does not have a dedicated Builtin), the Gas cost incurred in validation of the signature is very high. In this library we aim to optimize that as much as possible.
 
@@ -18,7 +18,7 @@ We've adapted `cairo-lang`'s `secp256k1` ECDSA validation implementation. We had
 handling of `BigInt3` limbs as `secp256r1`'s operations only very tightly fit into the `BigInt3` representation.
 Also, `cairo-lang` uses the public-key recovery algorithm for ECDSA validation while this library uses straight-forward validation since in a secure-hardware signing setup, we don't have `v` which is necessary for correct public-key recovery.
 
-Some hints were modified to accomodate the above, these will be introduced as part of `cairo-lang` version `0.11.0`. To use this prior to that you will have to apply the patch at `cairo-lang-secp256r1-hints.patch` on your python virtual env.
+Some hints were modified to accommodate the above, these will be introduced as part of `cairo-lang` version `0.11.0`. To use this prior to that you will have to apply the patch at `cairo-lang-secp256r1-hints.patch` on your python virtual env.
 
 > patch -s -p2 -d venv/lib/python3.9/site-packages/ < cairo-lang-secp256r1-hints.patch
 
