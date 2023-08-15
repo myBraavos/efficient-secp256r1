@@ -67,9 +67,15 @@ func ec_mulmuladdW_bg3{range_check_ptr}(
     assert [range_check_ptr + 1] = 86 - len_hi;
     let range_check_ptr = range_check_ptr + 2;
 
-    let (hiR )= ec_mulmuladd_W_inner(R, PrecPoint, scalar_u.d2, scalar_v.d2, len_hi);
-    let (medR) = ec_mulmuladd_W_inner(hiR, PrecPoint, scalar_u.d1, scalar_v.d1, 85);
-    let (lowR) = ec_mulmuladd_W_inner(medR, PrecPoint, scalar_u.d0, scalar_v.d0, 85);
+    let (hiR, computed_u, computed_v) = ec_mulmuladd_W_inner(R, PrecPoint, scalar_u.d2, scalar_v.d2, len_hi, 0, 0);
+    assert computed_u = scalar_u.d2;
+    assert computed_v = scalar_v.d2;
+    let (medR, computed_u, computed_v) = ec_mulmuladd_W_inner(hiR, PrecPoint, scalar_u.d1, scalar_v.d1, 85, 0, 0);
+    assert computed_u = scalar_u.d1;
+    assert computed_v = scalar_v.d1;
+    let (lowR, computed_u, computed_v) = ec_mulmuladd_W_inner(medR, PrecPoint, scalar_u.d0, scalar_v.d0, 85, 0, 0);
+    assert computed_u = scalar_u.d0;
+    assert computed_v = scalar_v.d0;
 
     return (res=lowR);
 
