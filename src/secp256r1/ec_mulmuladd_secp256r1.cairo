@@ -76,7 +76,6 @@ func ec_mulmuladdW_bg3{range_check_ptr}(
     let (lowR, computed_u, computed_v) = ec_mulmuladd_W_inner(medR, PrecPoint, scalar_u.d0, scalar_v.d0, 85, 0, 0);
     assert computed_u = scalar_u.d0;
     assert computed_v = scalar_v.d0;
-
     return (res=lowR);
 
 }

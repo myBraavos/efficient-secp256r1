@@ -5,6 +5,7 @@ import json
 import pytest
 import pytest_asyncio
 import re
+import warnings
 
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 from cryptography.hazmat.primitives import hashes
@@ -99,7 +100,7 @@ async def test_is_valid_sig_sanity_secp256r1_indexed(init_contracts, test_case):
             _ = await main_contract.verify_secp256r1_sig(
                 list(to_uint(digest_int)), [*to_uint(r), *to_uint(s)], key
             ).call()
-            print(_)
+            warnings.warn(UserWarning("{}".format(_)))
         except StarkException as err:
             if test_case.test["result"] != "invalid":
                 unexpected_exception = True

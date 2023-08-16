@@ -43,9 +43,6 @@ func ec_mulmuladd_W_inner{range_check_ptr}(
     alloc_locals;
     let mm2 = m-2;
 
-    //(8*v1 4*u1+ 2*v0 + u0), where (u1,u0) represents two bit at index m of scalar u, (resp for v)
-    local quad_bit;
-
     if (m == -1) {
         return (res=R, updated_u=computed_u, updated_v=computed_v);
     }
@@ -77,77 +74,94 @@ func ec_mulmuladd_W_inner{range_check_ptr}(
     let (double_point) = ec_double(R);
     let (quadruple_point) = ec_double(double_point);
 
-    //compute quadruple (8*v1 + 4*u1 + 2*v0 + u0)
-    %{
-        ids.quad_bit = (
-            8 * ((ids.scalar_v >> ids.m) & 1)
-            + 4 * ((ids.scalar_u >> ids.m) & 1)
-            + 2 * ((ids.scalar_v >> (ids.m - 1)) & 1)
-            + ((ids.scalar_u >> (ids.m - 1)) & 1)
-        )
-    %}
+    // Extract bits
+    local dibit;
+    %{ ids.dibit = ((ids.scalar_u >> ids.m) & 1) + 2 * ((ids.scalar_v >> ids.m) & 1) %}
+    // 2 * v1 + u1
+    let dibit_1 = dibit;
+    local dibit;
+    local m = m - 1;
+    %{ ids.dibit = ((ids.scalar_u >> ids.m) & 1) + 2 * ((ids.scalar_v >> ids.m) & 1) %}
+    // 2 * v0 + u0
+    let dibit_0 = dibit;
 
-    if (quad_bit == 0) {
-        return ec_mulmuladd_W_inner(quadruple_point, Prec, scalar_u, scalar_v, mm2, 4*computed_u, 4*computed_v);
+    if (dibit_0 == 0) {
+        if (dibit_1 == 0) {
+            return ec_mulmuladd_W_inner(quadruple_point, Prec, scalar_u, scalar_v, mm2, 4*computed_u, 4*computed_v);
+        }
+        if (dibit_1 == 1) {
+        let (ecTemp) = ec_add(quadruple_point,Prec.W4);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 2, 4*computed_v);
+        }
+
+        if (dibit_1 == 2) {
+        let (ecTemp) = ec_add(quadruple_point,Prec.W8);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u, 4*computed_v + 2);
+        }
+
+        assert dibit_1 = 3;
+        let (ecTemp) = ec_add(quadruple_point,Prec.W12);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 2, 4*computed_v + 2);
+
     }
-    if (quad_bit == 1) {
+    if (dibit_0 == 1) {
+        if (dibit_1 == 0) {
         let (ecTemp) = ec_add(quadruple_point,Prec.G);
         return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 1, 4*computed_v);
+        }
+        if (dibit_1 == 1) {
+        let (ecTemp) = ec_add(quadruple_point,Prec.W5);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 3, 4*computed_v);
+        }
+
+        if (dibit_1 == 2) {
+        let (ecTemp) = ec_add(quadruple_point,Prec.W9);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 1, 4*computed_v + 2);
+        }
+
+        assert dibit_1 = 3;
+        let (ecTemp) = ec_add(quadruple_point,Prec.W13);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 3, 4*computed_v + 2);
+
     }
-    if (quad_bit == 2) {
+    if (dibit_0 == 2) {
+        if (dibit_1 == 0) {
         let (ecTemp) = ec_add(quadruple_point,Prec.Q);
         return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u, 4*computed_v + 1);
+        }
+        if (dibit_1 == 1) {
+        let (ecTemp) = ec_add(quadruple_point,Prec.W6);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 2, 4*computed_v + 1);
+        }
+
+        if (dibit_1 == 2) {
+        let (ecTemp) = ec_add(quadruple_point,Prec.W10);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u, 4*computed_v + 3);
+        }
+
+        assert dibit_1 = 3;
+        let (ecTemp) = ec_add(quadruple_point,Prec.W14);
+        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 2, 4*computed_v + 3);
+
     }
-    if (quad_bit == 3) {
+    assert dibit_0 = 3;
+    if (dibit_1 == 0) {
         let (ecTemp) = ec_add(quadruple_point,Prec.W3);
         return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 1, 4*computed_v + 1);
     }
-    if (quad_bit == 4) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W4);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 2, 4*computed_v);
-    }
-    if (quad_bit == 5) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W5);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 3, 4*computed_v);
-    }
-    if (quad_bit == 6) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W6);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 2, 4*computed_v + 1);
-    }
-    if (quad_bit == 7) {
+    if (dibit_1 == 1) {
         let (ecTemp) = ec_add(quadruple_point,Prec.W7);
         return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 3, 4*computed_v + 1);
     }
-    if (quad_bit == 8) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W8);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u, 4*computed_v + 2);
-    }
-    if (quad_bit == 9) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W9);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 1, 4*computed_v + 2);
-    }
-    if (quad_bit == 10) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W10);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u, 4*computed_v + 3);
-    }
-    if (quad_bit == 11) {
+
+    if (dibit_1 == 2) {
         let (ecTemp) = ec_add(quadruple_point,Prec.W11);
         return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 1, 4*computed_v + 3);
     }
-    if (quad_bit == 12) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W12);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 2, 4*computed_v + 2);
-    }
-    if (quad_bit == 13) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W13);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 3, 4*computed_v + 2);
-    }
-    if (quad_bit == 14) {
-        let (ecTemp) = ec_add(quadruple_point,Prec.W14);
-        return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 2, 4*computed_v + 3);
-    } 
-    
-    assert quad_bit = 15;
+
+    assert dibit_1 = 3;
     let (ecTemp) = ec_add(quadruple_point,Prec.W15);
     return ec_mulmuladd_W_inner(ecTemp, Prec, scalar_u, scalar_v, mm2, 4*computed_u + 3 , 4*computed_v + 3);
+
 }
+
