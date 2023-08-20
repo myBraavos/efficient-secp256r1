@@ -64,13 +64,17 @@ def event_loop(request):
 
 @pytest_asyncio.fixture(scope="module")
 async def init_contracts():
+    disable_hint_validation = False
     main_def = compile_starknet_files(
-        files=["src/main.cairo"], debug_info=True, disable_hint_validation=False
+        files=["src/main.cairo"], debug_info=True, disable_hint_validation=disable_hint_validation
     )
     starknet = await Starknet.empty()
-
-    main_contract = await starknet.deploy(
+    main_contract_decl = await starknet.deprecated_declare(
         contract_class=main_def,
+        disable_hint_validation=disable_hint_validation,
+    )
+    main_contract = await starknet.deploy(
+        class_hash=main_contract_decl.class_hash,
     )
     return main_contract
 
