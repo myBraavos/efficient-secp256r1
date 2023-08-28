@@ -157,7 +157,24 @@ func reduce{range_check_ptr}(x: UnreducedBigInt3) -> (reduced_x: BigInt3) {
     %{ from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P %}
     %{
         from starkware.cairo.common.cairo_secp.secp_utils import pack
-        value = pack(ids.x, PRIME) % SECP_P
+        x = pack(ids.x, PRIME) % SECP_P
+    %}
+    // WORKAROUND: assign x into value for nondet_bigint3 until hint is fixed by Starkware
+    %{
+        from starkware.python.math_utils import div_mod
+
+        value = x_inv = div_mod(1, x, SECP_P)
+    %}
+    let (x_inv: BigInt3) = nondet_bigint3();
+    tempvar x = UnreducedBigInt3(d0=x_inv.d0, d1=x_inv.d1, d2=x_inv.d2);
+    %{
+        from starkware.cairo.common.cairo_secp.secp_utils import pack
+        x = pack(ids.x, PRIME) % SECP_P
+    %}
+    %{
+        from starkware.python.math_utils import div_mod
+
+        value = x_inv = div_mod(1, x, SECP_P)
     %}
     let (reduced_x: BigInt3) = nondet_bigint3();
 
